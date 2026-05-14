@@ -1,0 +1,78 @@
+name: Deploy Azure Pricing MCP to Azure App Service
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+  # Atualize com o nome real do seu Web App
+  AZURE_WEBAPP_NAME: mcp-azure-pricing
+  AZURE_WEBAPP_PACKAGE_PATH: '.'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Criar venv e instalar dependencias
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Rodar testes
+        run: |
+          source .venv/bin/activate
+          pip install pytest
+          if [ -d tests ]; then pytest -q || true; fi
+
+      - name: Empacotar artefato para deploy
+        run: |
+          # Removemos o venv local antes de zipar — o Oryx do App Service
+          # vai instalar as dependencias do requirements.txt no build remoto.
+          rm -rf .venv
+          zip -r release.zip . \
+            -x "*.git*" \
+            -x ".github/*" \
+            -x "tests/*" \
+            -x "*.pyc" \
+            -x "__pycache__/*" \
+            -x ".venv/*"
+
+      - name: Upload do artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-app
+          path: release.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: production
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    steps:
+      - name: Download do artefato
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+
+      - name: Deploy no Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: release.zip

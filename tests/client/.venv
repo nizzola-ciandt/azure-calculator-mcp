@@ -1,0 +1,14 @@
+# .env.example
+"""
+Arquivo de exemplo para variáveis de ambiente
+Copie para .env e preencha com seus valores
+"""
+
+# Azure OpenAI Configuration
+AZURE_OPENAI_ENDPOINT=
+AZURE_OPENAI_API_KEY=
+AZURE_OPENAI_DEPLOYMENT=gpt-4.1
+AZURE_OPENAI_API_VERSION=2025-04-14
+
+# MCP Server Configuration
+MCP_SERVER_COMMAND=python azure_calculator_mcp_server.py
