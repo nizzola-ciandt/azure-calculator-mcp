@@ -1,15 +1,12 @@
 name: Deploy Azure Pricing MCP to Azure App Service
 
 on:
-  push:
-    branches:
-      - main
+  # DESATIVADO — substituído por main_ciandt-pricing-mcp.yml (gerado pelo Azure Portal via OIDC)
   workflow_dispatch:
 
 env:
   PYTHON_VERSION: '3.11'
-  # Atualize com o nome real do seu Web App
-  AZURE_WEBAPP_NAME: mcp-azure-pricing
+  AZURE_WEBAPP_NAME: ciandt-pricing-mcp
   AZURE_WEBAPP_PACKAGE_PATH: '.'
 
 jobs:
